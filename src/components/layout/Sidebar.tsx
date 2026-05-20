@@ -81,7 +81,8 @@ export function Sidebar() {
           <img
             src={logoUrl}
             alt={businessName}
-            className="w-10 h-10 rounded-xl object-cover"
+            className="w-10 h-10 rounded-xl object-cover shrink-0"
+            style={{ border: '1px solid rgba(255,255,255,0.1)' }}
           />
         ) : (
           <div
@@ -101,15 +102,24 @@ export function Sidebar() {
             </svg>
           </div>
         )}
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p
-            className="text-sm font-semibold truncate"
-            style={{ color: 'var(--navy-text)' }}
+            className="text-sm font-semibold"
+            style={{
+              color: 'var(--navy-text)',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              lineHeight: '1.35',
+              wordBreak: 'break-word',
+            }}
+            title={businessName}
           >
             {businessName}
           </p>
           <p
-            className="text-xs truncate"
+            className="text-xs truncate mt-0.5"
             style={{ color: 'var(--navy-text-muted)' }}
           >
             @{businessSlug}
