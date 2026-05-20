@@ -10,6 +10,7 @@ import { OrderVolumeChart } from '@/components/reports/OrderVolumeChart'
 import { PaymentStatusChart } from '@/components/reports/PaymentStatusChart'
 import { TopCustomersTable } from '@/components/reports/TopCustomersTable'
 import { formatCurrency } from '@/lib/utils/format'
+import { useBusinessContext } from '@/contexts/BusinessContext'
 
 type TimeFilter = 'daily' | 'monthly' | 'custom'
 
@@ -44,6 +45,7 @@ function FilterBtn({ active, onClick, icon, label, id }: FilterBtnProps) {
 }
 
 export default function ReportsPage() {
+  const { businessId } = useBusinessContext()
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('monthly')
   // Monthly mode: which year to display
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear())
@@ -77,11 +79,13 @@ export default function ReportsPage() {
         supabase
           .from('orders')
           .select('order_date, total_amount, order_status')
+          .eq('business_id', businessId)
           .gte('order_date', yearStart)
           .lte('order_date', yearEnd),
         supabase
           .from('payments')
           .select('payment_date, amount')
+          .eq('business_id', businessId)
           .gte('payment_date', yearStart)
           .lte('payment_date', yearEnd),
       ])
@@ -138,7 +142,7 @@ export default function ReportsPage() {
 
     } else {
       // Daily — use v_reports_daily, optionally filtered by date range
-      let query = supabase.from('v_reports_daily').select('*').order('day', { ascending: true })
+      let query = supabase.from('v_reports_daily').select('*').eq('business_id', businessId).order('day', { ascending: true })
       if (timeFilter === 'daily') {
         const today = new Date().toISOString().split('T')[0]
         const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]
@@ -176,6 +180,7 @@ export default function ReportsPage() {
     const { data: orderStatusData } = await supabase
       .from('orders')
       .select('payment_status')
+      .eq('business_id', businessId)
     const orders = (orderStatusData ?? []) as { payment_status: string }[]
     setPaidCount(orders.filter(o => o.payment_status === 'Paid').length)
     setPartialCount(orders.filter(o => o.payment_status === 'Partially Paid').length)
@@ -185,6 +190,7 @@ export default function ReportsPage() {
     const { data: custData } = await supabase
       .from('v_customer_financial_summary')
       .select('*')
+      .eq('business_id', businessId)
       .order('pending_amount', { ascending: false })
       .gt('pending_amount', 0)
       .limit(8)
@@ -200,10 +206,12 @@ export default function ReportsPage() {
     })))
 
     setLoading(false)
-  }, [timeFilter, customFrom, customTo, selectedYear])
+  }, [timeFilter, customFrom, customTo, selectedYear, businessId])
 
   useEffect(() => {
-    fetchReports()
+    Promise.resolve().then(() => {
+      fetchReports()
+    })
   }, [fetchReports])
 
   const inputStyle: React.CSSProperties = {

@@ -23,6 +23,7 @@ export function useProducts(activeCategory: string, searchQuery: string) {
   const [error, setError] = useState<string | null>(null)
 
   const fetchProducts = useCallback(async () => {
+    await Promise.resolve()
     setLoading(true)
     setError(null)
     const supabase = createClient()
@@ -30,6 +31,7 @@ export function useProducts(activeCategory: string, searchQuery: string) {
     const { data, error: fetchError } = await supabase
       .from('products')
       .select('*')
+      .eq('business_id', businessId)
       .eq('is_active', true)
       .order('created_at', { ascending: false })
 
@@ -39,11 +41,13 @@ export function useProducts(activeCategory: string, searchQuery: string) {
       setProducts((data ?? []) as Product[])
     }
     setLoading(false)
-  }, [])
+  }, [businessId])
 
   // Initial load
   useEffect(() => {
-    fetchProducts()
+    Promise.resolve().then(() => {
+      fetchProducts()
+    })
   }, [fetchProducts])
 
   const addProduct = useCallback(

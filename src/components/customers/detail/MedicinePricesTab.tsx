@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Pencil, Trash2, Tag } from 'lucide-react'
+import { Trash2, Tag } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import type { CustomerSpecialPrice, Product } from '@/lib/types/database'
@@ -34,13 +34,16 @@ export function MedicinePricesTab({ customerId, businessId }: MedicinePricesTabP
         product:products(id, product_name, salt, mrp, selling_price, category, moq, is_active, business_id, cost_price, discount_pct, min_stock, manufacturer, company, created_at, updated_at)
       `)
       .eq('customer_id', customerId)
+      .eq('business_id', businessId)
       .order('created_at', { ascending: false })
     setSpecialPrices((data ?? []) as SpecialPriceWithProduct[])
     setLoading(false)
-  }, [customerId])
+  }, [customerId, businessId])
 
   useEffect(() => {
-    fetchSpecialPrices()
+    Promise.resolve().then(() => {
+      fetchSpecialPrices()
+    })
   }, [fetchSpecialPrices])
 
   async function handleAssign(data: SpecialPriceFormData) {

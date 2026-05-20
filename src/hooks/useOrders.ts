@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useBusinessContext } from '@/contexts/BusinessContext'
-import type { OrderManagement, OrdersSummaryCounts, Payment } from '@/lib/types/database'
+import type { OrderManagement, OrdersSummaryCounts } from '@/lib/types/database'
 
 // ── Types for create/update/payment inputs ────────────────────────────────────
 export interface CreateOrderInput {
@@ -57,6 +57,7 @@ export function useOrders(activeTab: 'Pending' | 'Completed', searchQuery: strin
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   const fetchOrders = useCallback(async () => {
+    await Promise.resolve()
     setLoading(true)
     setError(null)
     const supabase = createClient()
@@ -64,10 +65,12 @@ export function useOrders(activeTab: 'Pending' | 'Completed', searchQuery: strin
       supabase
         .from('v_order_management')
         .select('*')
+        .eq('business_id', businessId)
         .order('order_date', { ascending: false }),
       supabase
         .from('v_orders_summary_counts')
         .select('*')
+        .eq('business_id', businessId)
         .single(),
     ])
     if (ordersRes.error) {
@@ -79,34 +82,41 @@ export function useOrders(activeTab: 'Pending' | 'Completed', searchQuery: strin
       setCounts(countsRes.data as OrdersSummaryCounts)
     }
     setLoading(false)
-  }, [])
+  }, [businessId])
 
   const fetchCounts = useCallback(async () => {
     const supabase = createClient()
     const { data } = await supabase
       .from('v_orders_summary_counts')
       .select('*')
+      .eq('business_id', businessId)
       .single()
     if (data) setCounts(data as OrdersSummaryCounts)
-  }, [])
+  }, [businessId])
 
   // ── Realtime subscription ─────────────────────────────────────────────────
   useEffect(() => {
-    fetchOrders()
+    Promise.resolve().then(() => {
+      fetchOrders()
+    })
     const supabase = createClient()
     const channel = supabase
       .channel('orders-page')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders' },
-        () => { fetchOrders() }
+        { event: '*', schema: 'public', table: 'orders', filter: `business_id=eq.${businessId}` },
+        () => {
+          Promise.resolve().then(() => {
+            fetchOrders()
+          })
+        }
       )
       .subscribe()
     channelRef.current = channel
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [fetchOrders])
+  }, [fetchOrders, businessId])
 
   // ── CRUD ──────────────────────────────────────────────────────────────────
   const createOrder = useCallback(async (data: CreateOrderInput): Promise<OperationResult> => {

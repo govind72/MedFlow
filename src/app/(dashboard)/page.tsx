@@ -19,8 +19,10 @@ import { formatCurrency } from '@/lib/utils/format'
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import { PendingOrdersTable } from '@/components/dashboard/PendingOrdersTable'
 import { RecentPaymentsSection } from '@/components/dashboard/RecentPaymentsSection'
+import { useBusinessContext } from '@/contexts/BusinessContext'
 
 export default function DashboardPage() {
+  const { businessId } = useBusinessContext()
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [pendingOrders, setPendingOrders] = useState<PendingOrderDashboard[]>([])
   const [loading, setLoading] = useState(true)
@@ -33,10 +35,11 @@ export default function DashboardPage() {
     const supabase = createClient()
 
     const [summaryRes, ordersRes] = await Promise.all([
-      supabase.from('v_dashboard_summary').select('*').maybeSingle(),
+      supabase.from('v_dashboard_summary').select('*').eq('business_id', businessId).maybeSingle(),
       supabase
         .from('v_pending_orders_dashboard')
         .select('*')
+        .eq('business_id', businessId)
         .order('order_date', { ascending: false }),
     ])
 
@@ -70,11 +73,13 @@ export default function DashboardPage() {
     setSummary((summaryRes.data as DashboardSummary | null) ?? emptySummary)
     setPendingOrders((ordersRes.data ?? []) as PendingOrderDashboard[])
     setLoading(false)
-  }, [])
+  }, [businessId])
 
   // Initial fetch + realtime subscription
   useEffect(() => {
-    fetchDashboardData()
+    Promise.resolve().then(() => {
+      fetchDashboardData()
+    })
 
     const supabase = createClient()
 
@@ -82,9 +87,11 @@ export default function DashboardPage() {
       .channel('dashboard-orders')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders' },
+        { event: '*', schema: 'public', table: 'orders', filter: `business_id=eq.${businessId}` },
         () => {
-          fetchDashboardData()
+          Promise.resolve().then(() => {
+            fetchDashboardData()
+          })
         }
       )
       .subscribe()
@@ -92,7 +99,7 @@ export default function DashboardPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [fetchDashboardData])
+  }, [fetchDashboardData, businessId])
 
   // ── KPI card data ──────────────────────────────────────────────────────
   const kpiCards = [

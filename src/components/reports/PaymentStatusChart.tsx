@@ -1,7 +1,6 @@
 'use client'
 
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { formatCurrency } from '@/lib/utils/format'
 
 interface PaymentStatusChartProps {
   paid: number
@@ -10,11 +9,7 @@ interface PaymentStatusChartProps {
   loading: boolean
 }
 
-const SLICES = [
-  { key: 'paid',         label: 'Paid',           color: '#10B981' },
-  { key: 'partiallyPaid', label: 'Partially Paid', color: '#F97316' },
-  { key: 'unpaid',       label: 'Unpaid',          color: '#EF4444' },
-] as const
+
 
 function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number; payload: { color: string } }> }) {
   if (!active || !payload?.length) return null

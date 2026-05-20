@@ -17,7 +17,7 @@ import { DeleteCustomerDialog } from '@/components/customers/DeleteCustomerDialo
 
 export default function CustomersPage() {
   const router = useRouter()
-  const { businessName } = useBusinessContext()
+  const { businessName, businessId } = useBusinessContext()
 
   // Filter state
   const [activeType, setActiveType] = useState('ALL')
@@ -54,6 +54,7 @@ export default function CustomersPage() {
     const { data } = await supabase
       .from('v_customer_financial_summary')
       .select('customer_id, pending_amount')
+      .eq('business_id', businessId)
     if (data) {
       const map: Record<string, number> = {}
       data.forEach((row: Pick<CustomerFinancialSummary, 'customer_id' | 'pending_amount'>) => {
@@ -61,10 +62,12 @@ export default function CustomersPage() {
       })
       setPendingAmounts(map)
     }
-  }, [customers.length])
+  }, [customers.length, businessId])
 
   useEffect(() => {
-    fetchPendingAmounts()
+    Promise.resolve().then(() => {
+      fetchPendingAmounts()
+    })
   }, [fetchPendingAmounts])
 
   // ── Handlers ────────────────────────────────────────────────────────────────

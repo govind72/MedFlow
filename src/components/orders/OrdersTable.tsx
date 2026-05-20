@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Pencil, Trash2, Truck, ShoppingCart, CheckCircle, CheckCircle2, Loader2, CreditCard } from 'lucide-react'
+import { Pencil, Trash2, Truck, ShoppingCart, CheckCircle, CheckCircle2, Loader2 } from 'lucide-react'
 import type { OrderManagement } from '@/lib/types/database'
 import { formatCurrency, formatDate, formatDateLong } from '@/lib/utils/format'
 import { StatusIcon } from '@/components/dashboard/StatusIcon'

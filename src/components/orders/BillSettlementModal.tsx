@@ -45,12 +45,14 @@ export function BillSettlementModal({ open, onClose, order, onPaymentDone, loadi
 
   useEffect(() => {
     if (open && order) {
-      setPaymentMode('Full')
-      setPartialAmount(0)
-      setPartialError('')
-      setHistoryOpen(false)
-      setShowSuccess(false)
-      fetchHistory()
+      Promise.resolve().then(() => {
+        setPaymentMode('Full')
+        setPartialAmount(0)
+        setPartialError('')
+        setHistoryOpen(false)
+        setShowSuccess(false)
+        fetchHistory()
+      })
 
       // Auto-repair: if payment_status is already Paid but bill_cleared is false,
       // the DB trigger didn't fire — patch it now and refresh the parent

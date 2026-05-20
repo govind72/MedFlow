@@ -5,6 +5,7 @@ import { CreditCard, CheckCircle2, Clock, RefreshCw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Payment } from '@/lib/types/database'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
+import { useBusinessContext } from '@/contexts/BusinessContext'
 
 interface RecentPayment extends Payment {
   customer_name?: string
@@ -24,6 +25,7 @@ function ShimmerRow() {
 }
 
 export function RecentPaymentsSection() {
+  const { businessId } = useBusinessContext()
   const [payments, setPayments] = useState<RecentPayment[]>([])
   const [loading, setLoading] = useState(true)
   const [todayTotal, setTodayTotal] = useState(0)
@@ -40,6 +42,7 @@ export function RecentPaymentsSection() {
         orders!inner(bill_number),
         customers!inner(business_name)
       `)
+      .eq('business_id', businessId)
       .eq('payment_date', today)
       .order('created_at', { ascending: false })
 
@@ -53,21 +56,25 @@ export function RecentPaymentsSection() {
       setTodayTotal(enriched.reduce((sum, p) => sum + p.amount, 0))
     }
     setLoading(false)
-  }, [])
+  }, [businessId])
 
   useEffect(() => {
-    fetchTodayPayments()
+    Promise.resolve().then(() => {
+      fetchTodayPayments()
+    })
 
     // Subscribe to payment inserts so dashboard updates in real-time
     const supabase = createClient()
     const channel = supabase
       .channel('dashboard-payments')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'payments' }, () => {
-        fetchTodayPayments()
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'payments', filter: `business_id=eq.${businessId}` }, () => {
+        Promise.resolve().then(() => {
+          fetchTodayPayments()
+        })
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [fetchTodayPayments])
+  }, [fetchTodayPayments, businessId])
 
   return (
     <div style={{ marginTop: '32px' }}>

@@ -20,7 +20,7 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select(`
       id,
@@ -31,7 +31,13 @@ export default async function DashboardLayout({
     .eq('id', user.id)
     .single()
 
+  // If the profile query failed (e.g. RLS blocking), sign the user out first
+  // to prevent an infinite redirect loop between "/" and "/login"
   if (!profile || !profile.business) {
+    if (profileError) {
+      console.error('Profile query failed (possibly RLS):', profileError.message)
+    }
+    await supabase.auth.signOut()
     redirect('/login')
   }
 
@@ -41,6 +47,7 @@ export default async function DashboardLayout({
     : profile.business
 
   if (!business) {
+    await supabase.auth.signOut()
     redirect('/login')
   }
 

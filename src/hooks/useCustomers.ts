@@ -25,12 +25,14 @@ export function useCustomers(
   const [error, setError] = useState<string | null>(null)
 
   const fetchCustomers = useCallback(async () => {
+    await Promise.resolve()
     setLoading(true)
     setError(null)
     const supabase = createClient()
     const { data, error: fetchError } = await supabase
       .from('customers')
       .select('*')
+      .eq('business_id', businessId)
       .eq('status', 'Active')
       .order('created_at', { ascending: false })
 
@@ -40,10 +42,12 @@ export function useCustomers(
       setCustomers((data ?? []) as Customer[])
     }
     setLoading(false)
-  }, [])
+  }, [businessId])
 
   useEffect(() => {
-    fetchCustomers()
+    Promise.resolve().then(() => {
+      fetchCustomers()
+    })
   }, [fetchCustomers])
 
   const addCustomer = useCallback(

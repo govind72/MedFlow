@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Payment } from '@/lib/types/database'
 import { formatCurrency, formatDate, formatDateLong } from '@/lib/utils/format'
+import { useBusinessContext } from '@/contexts/BusinessContext'
 
 interface PaymentHistoryTabProps {
   customerId: string
@@ -30,6 +31,7 @@ function ShimmerRow() {
 
 export function PaymentHistoryTab({ customerId }: PaymentHistoryTabProps) {
   const router = useRouter()
+  const { businessId } = useBusinessContext()
   const [payments, setPayments] = useState<PaymentWithOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [showAll, setShowAll] = useState(false)
@@ -46,6 +48,7 @@ export function PaymentHistoryTab({ customerId }: PaymentHistoryTabProps) {
         orders!inner(bill_number)
       `)
       .eq('customer_id', customerId)
+      .eq('business_id', businessId)
       .order('created_at', { ascending: false })
 
     if (data) {
@@ -57,10 +60,12 @@ export function PaymentHistoryTab({ customerId }: PaymentHistoryTabProps) {
       )
     }
     setLoading(false)
-  }, [customerId])
+  }, [customerId, businessId])
 
   useEffect(() => {
-    fetchPayments()
+    Promise.resolve().then(() => {
+      fetchPayments()
+    })
   }, [fetchPayments])
 
   const displayed = showAll ? payments : payments.slice(0, 10)
