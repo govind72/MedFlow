@@ -190,8 +190,17 @@ export function Sidebar() {
         className="px-3 py-4"
         style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
       >
-        {/* User info */}
-        <div className="flex items-center gap-3 px-3 py-3 rounded-xl mb-1" style={{ background: 'rgba(255,255,255,0.03)' }}>
+        {/* User info — click to navigate to profile page */}
+        <button
+          id="sidebar-user-profile"
+          type="button"
+          onClick={() => router.push('/profile')}
+          aria-label="View profile"
+          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl mb-1 text-left transition-all duration-150"
+          style={{ background: 'rgba(255,255,255,0.03)', border: 'none', cursor: 'pointer' }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+        >
           {/* Avatar */}
           <div
             className="flex items-center justify-center w-9 h-9 rounded-full shrink-0 text-sm font-semibold"
@@ -220,7 +229,7 @@ export function Sidebar() {
               {userRole}
             </span>
           </div>
-        </div>
+        </button>
 
         {/* Logout */}
         <button

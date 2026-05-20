@@ -36,22 +36,22 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  if (!user && pathname !== '/login') {
+  // Public routes accessible without authentication
+  const publicRoutes = ['/login', '/reset-password']
+
+  if (!user && !publicRoutes.includes(pathname)) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  if (user && pathname === '/login') {
+  // Authenticated users don't need login or reset-password pages
+  if (user && (pathname === '/login')) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)
   }
 
-  // IMPORTANT: You *must* return the supabaseResponse object as it is. If you
-  // create a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so: NextResponse.next({ request })
-  // 2. Copy over the cookies, like so: newResponse.cookies.setAll(supabaseResponse.cookies.getAll())
   return supabaseResponse
 }
 
